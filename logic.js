@@ -3,8 +3,8 @@ function getRadius(marker) {
     return marker * 30000
   };
   
-  // create function for colors of markers based on magnitude
-  function getColor(marker) {
+// create function for colors of markers based on magnitude
+function getColor(marker) {
     switch(true) {
       case marker > 5 : 
         return "#ff0000";
@@ -21,18 +21,18 @@ function getRadius(marker) {
       default:
         return "#000"
     }
-  }
+};
+
+// store json in variable
+var queryURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
   
-  // store json in variable
-  var queryURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
-  
-  // perform get request to url
-  d3.json(queryURL, function(data) {
+// perform get request to url
+d3.json(queryURL, function(data) {
     // send data.features to createFeatures function
     createFeatures(data.features);
-  });
+});
   
-  function createFeatures(earthquakeData) {
+function createFeatures(earthquakeData) {
     // create function that displays place, time, and magnitude as popup
     function onEachFeature(feature, layer) {
         layer.bindPopup("<h3>" + feature.properties.place +
@@ -59,15 +59,21 @@ function getRadius(marker) {
         });
     // send earthquake layer to createMap function
     createMap(earthquakes);
-  };
+};
   
-  function createMap(earthquakes) {
+function createMap(earthquakes) {
     //define light layer
     var lightmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?" +
     "access_token=pk.eyJ1IjoidmljdG9yaWFsYW0iLCJhIjoiY2podjRhYWZwMHZpbDN2cWh5MmM1YmxuNSJ9." +
     "P9FfhMVL32NHDZaRKFP5pw"
     );
-  
+    
+    // define satellite layer
+    var satellitemap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v9/tiles/256/{z}/{x}/{y}?" +
+    "access_token=pk.eyJ1IjoidmljdG9yaWFsYW0iLCJhIjoiY2podjRhYWZwMHZpbDN2cWh5MmM1YmxuNSJ9." +
+    "P9FfhMVL32NHDZaRKFP5pw"
+    );
+
     // define streetmap layer
     var streetmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/outdoors-v10/tiles/256/{z}/{x}/{y}?" +
     "access_token=pk.eyJ1IjoidmljdG9yaWFsYW0iLCJhIjoiY2podjRhYWZwMHZpbDN2cWh5MmM1YmxuNSJ9." +
@@ -76,8 +82,9 @@ function getRadius(marker) {
   
     // define baseMaps object to hold base layers
     var baseMaps = {
-        "Light Map": lightmap,
-        "Streep Map": streetmap
+        "Light": lightmap,
+        "Satellite": satellitemap,
+        "Street": streetmap
     };
   
     // create overlayMaps object to hold overlay layers
@@ -96,4 +103,26 @@ function getRadius(marker) {
     L.control.layers(baseMaps, overlayMaps, {
         collapsed: false
     }).addTo(map);
-  };
+
+
+    // create legend to display magnitude info on map
+    var info = L.control({
+        position: "bottomright"
+    });
+
+    // when layer control is added, insert div with class "legend"
+    info.onAdd = function(map) {
+        var div = L.DomUtil.create("div", "legend"),
+        grade = [0, 1, 2, 3, 4, 5];
+        
+        // create loop to create legend
+        for (var i = 0; i < grade.length; i++) {
+            div.innerHTML +=  
+            "<i style= 'background:" + getColor(grade[i] + 1) + "'></i> " +
+            grade[i] + (grade[i + 1] ? "-" + grade[i + 1] + '<br>' : '+');
+        }
+        return div;
+    };
+    // add info legend to map
+    info.addTo(map);
+};
